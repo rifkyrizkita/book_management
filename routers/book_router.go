@@ -16,5 +16,7 @@ func BookRouters(book fiber.Router) {
 	book.Delete("/:id", middlewares.VerifyToken, middlewares.AdminAuth, controllers.DeleteBook)
 	// get routers
 	book.Get("/", controllers.GetAllBooks)
+	book.Get("/borrowed-books", middlewares.VerifyToken, controllers.GetBorrowedBooksByUserId)
+	book.Get("/all-borrowed-books", middlewares.VerifyToken, middlewares.AdminAuth, controllers.GetAllBorrowedBooks)
 	book.Get("/:id", controllers.GetBookById)
 }

@@ -11,7 +11,7 @@ import (
 )
 
 func AddNewBook(c *fiber.Ctx) error {
-	// Ambil ID pengguna dari token JWT
+
 	// id, ok := c.Locals("user").(jwt.MapClaims)["sub"].(float64)
 	// if !ok {
 	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token not valid"})
@@ -51,7 +51,7 @@ func AddNewBook(c *fiber.Ctx) error {
 }
 
 func DeleteBook(c *fiber.Ctx) error {
-	// Ambil ID pengguna dari token JWT
+
 	// id, ok := c.Locals("user").(jwt.MapClaims)["sub"].(float64)
 	// if !ok {
 	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token not valid"})
@@ -94,7 +94,7 @@ func GetAllBooks(c *fiber.Ctx) error {
 func GetBookById(c *fiber.Ctx) error {
 	bookId := c.Params("id")
 	var book models.Book
-	err := database.DB.Where("id = ?", bookId).Take(&book).Error
+	err := database.DB.Where("id = ?", bookId).Joins("Category").Take(&book).Error
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -112,18 +112,15 @@ func BorrowBook(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid book ID"})
 	}
 
-	// Cek apakah buku ada
 	var book models.Book
 	if err := database.DB.First(&book, bookId).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Book not found"})
 	}
 
-	// Cek stok buku
 	if book.Stock == 0 {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Book out of stock"})
 	}
 
-	// Buat data peminjaman
 	borrowing := models.Borrowing{
 		UserID:     uint(id),
 		BookID:     uint(bookId),
@@ -131,53 +128,45 @@ func BorrowBook(c *fiber.Ctx) error {
 		Status:     "borrowed",
 	}
 
-	// Simpan data peminjaman ke database
 	if err := database.DB.Create(&borrowing).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Kurangi stok buku
 	book.Stock--
 	if err := database.DB.Save(&book).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Respon sukses
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Book borrowed successfully",
 	})
 }
 
 func ReturnBook(c *fiber.Ctx) error {
-	// Mendapatkan ID pengguna dari token
+
 	id, ok := c.Locals("user").(jwt.MapClaims)["sub"].(float64)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token not valid"})
 	}
 
-	// Mendapatkan ID peminjaman dari parameter
 	borrowingId, err := c.ParamsInt("id")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid borrowing ID"})
 	}
 
-	// Cari data peminjaman berdasarkan ID
 	var borrowing models.Borrowing
 	if err := database.DB.First(&borrowing, borrowingId).Error; err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Borrowing record not found"})
 	}
 
-	// Pastikan peminjaman milik user yang sedang login
 	if borrowing.UserID != uint(id) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "You are not authorized to return this book"})
 	}
 
-	// Cek apakah buku sudah dikembalikan
 	if borrowing.Status == "returned" {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Book already returned"})
 	}
 
-	// Update status peminjaman dan tanggal pengembalian
 	now := string(time.Now().Format("2006-01-02"))
 	borrowing.Status = "returned"
 	borrowing.ReturnDate = &now
@@ -186,15 +175,81 @@ func ReturnBook(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	// Tambahkan kembali stok buku
 	var book models.Book
 	if err := database.DB.First(&book, borrowing.BookID).Error; err == nil {
 		book.Stock++
 		database.DB.Save(&book)
 	}
 
-	// Respon sukses
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Book returned successfully",
+	})
+}
+
+func GetBorrowedBooksByUserId(c *fiber.Ctx) error {
+
+	id, ok := c.Locals("user").(jwt.MapClaims)["sub"].(float64)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token not valid"})
+	}
+
+	var borrowings []models.Borrowing
+
+	err := database.DB.Preload("Book").Where("user_id = ? AND status = ?", uint(id), "borrowed").Find(&borrowings).Error
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error fetching borrowed books"})
+	}
+
+	if len(borrowings) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "No books currently borrowed"})
+	}
+
+	var borrowedBooks []fiber.Map
+	for _, borrowing := range borrowings {
+		borrowedBooks = append(borrowedBooks, fiber.Map{
+			"id":          borrowing.Book.ID,
+			"title":       borrowing.Book.Title,
+			"author":      borrowing.Book.Author,
+			"borrow_date": borrowing.BorrowDate,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Books currently borrowed",
+		"books":   borrowedBooks,
+	})
+}
+
+func GetAllBorrowedBooks(c *fiber.Ctx) error {
+	var borrowings []models.Borrowing
+
+	err := database.DB.Preload("Book").Preload("User").Where("status = ?", "borrowed").Find(&borrowings).Error
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Error fetching borrowed books"})
+	}
+
+	if len(borrowings) == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"message": "No books currently borrowed"})
+	}
+
+	var borrowedBooks []fiber.Map
+	for _, borrowing := range borrowings {
+		borrowedBooks = append(borrowedBooks, fiber.Map{
+			"borrow_id":     borrowing.ID,
+			"user_id":       borrowing.UserID,
+			"user_name":     borrowing.User.Username,
+			"user_email":    borrowing.User.Email,
+			"book_id":       borrowing.Book.ID,
+			"book_title":    borrowing.Book.Title,
+			"book_author":   borrowing.Book.Author,
+			"borrow_date":   borrowing.BorrowDate,
+			"return_date":   borrowing.ReturnDate,
+			"borrow_status": borrowing.Status,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message":    "All borrowed books",
+		"borrowings": borrowedBooks,
 	})
 }

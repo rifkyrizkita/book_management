@@ -10,7 +10,6 @@ import (
 func AddCategory(c *fiber.Ctx) error {
 	var body requests.AddCategoryRequest
 
-	// Parse request body
 	if err := c.BodyParser(&body); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -22,7 +21,6 @@ func AddCategory(c *fiber.Ctx) error {
 		})
 	}
 
-	// Buat kategori baru
 	category := models.Category{
 		Category: body.Category,
 	}
@@ -34,49 +32,46 @@ func AddCategory(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message":  "Category created successfully",
+		"message": "Category created successfully",
 	})
 }
 
 func GetAllCategories(c *fiber.Ctx) error {
-    var categories []models.Category
+	var categories []models.Category
 
-    if err := database.DB.Find(&categories).Error; err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": "Failed to fetch categories",
-        })
-    }
+	if err := database.DB.Find(&categories).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to fetch categories",
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(fiber.Map{
-        "categories": categories,
-    })
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"categories": categories,
+	})
 }
 
 func DeleteCategory(c *fiber.Ctx) error {
-    categoryId, err := c.ParamsInt("id")
-    if err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-            "error": "Invalid category ID",
-        })
-    }
+	categoryId, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid category ID",
+		})
+	}
 
-    // Cek apakah kategori ada di database
-    var category models.Category
-    if err := database.DB.First(&category, categoryId).Error; err != nil {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-            "error": "Category not found",
-        })
-    }
+	var category models.Category
+	if err := database.DB.First(&category, categoryId).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Category not found",
+		})
+	}
 
-    // Hapus kategori
-    if err := database.DB.Delete(&category).Error; err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-            "error": "Failed to delete category",
-        })
-    }
+	if err := database.DB.Delete(&category).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to delete category",
+		})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(fiber.Map{
-        "message": "Category deleted successfully",
-    })
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Category deleted successfully",
+	})
 }
-
