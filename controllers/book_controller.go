@@ -12,11 +12,6 @@ import (
 
 func AddNewBook(c *fiber.Ctx) error {
 
-	// id, ok := c.Locals("user").(jwt.MapClaims)["sub"].(float64)
-	// if !ok {
-	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token not valid"})
-	// }
-
 	filename := c.Locals("filename").(string)
 
 	var body requests.AddNewBookBody
@@ -51,11 +46,6 @@ func AddNewBook(c *fiber.Ctx) error {
 }
 
 func DeleteBook(c *fiber.Ctx) error {
-
-	// id, ok := c.Locals("user").(jwt.MapClaims)["sub"].(float64)
-	// if !ok {
-	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token not valid"})
-	// }
 
 	bookId := c.Params("id")
 

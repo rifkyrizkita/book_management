@@ -26,7 +26,7 @@ func UploadFile(prefix string, path string) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 		}
 		
-		// Extract the file extension from the original filename
+		
 		fileExt := filepath.Ext(file.Filename)
 
 		allowedExts := []string{"jpg", "jpeg", "png", "webp", "gif"}

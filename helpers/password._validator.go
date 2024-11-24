@@ -33,6 +33,5 @@ func PasswordValidator(fl validator.FieldLevel) bool {
 		}
 	}
 
-	// Ensure at least one lowercase, one uppercase, one digit, and one symbol
 	return hasLowercase && hasUppercase && hasDigit && hasSymbol
 }

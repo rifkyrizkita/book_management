@@ -18,6 +18,5 @@ func UserRouters(user fiber.Router) {
 	// 	// put routers
 	user.Put("/forget-password", middlewares.ValidatorForgetPassword, controllers.ForgetPassword)
 	// 	// get routers
-	// 	user.Get("/all", controllers.AllUsers)
 	user.Get("/", middlewares.VerifyToken, controllers.Validation)
 }
