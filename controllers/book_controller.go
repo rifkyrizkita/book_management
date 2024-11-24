@@ -140,10 +140,7 @@ func BorrowBook(c *fiber.Ctx) error {
 
 func ReturnBook(c *fiber.Ctx) error {
 
-	// id, ok := c.Locals("user").(jwt.MapClaims)["sub"].(float64)
-	// if !ok {
-	// 	return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token not valid"})
-	// }
+	
 
 	borrowingId, err := c.ParamsInt("id")
 	if err != nil {
@@ -155,10 +152,7 @@ func ReturnBook(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Borrowing record not found"})
 	}
 
-	// if borrowing.UserID != uint(id) {
-	// 	return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "You are not authorized to return this book"})
-	// }
-
+	
 	if borrowing.Status == "returned" {
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "Book already returned"})
 	}
