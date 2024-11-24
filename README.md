@@ -29,7 +29,9 @@ This project is containerized using Docker. To build and run the app using Docke
 
     Build and start the application:
 
-    docker-compose up --build
+    docker-compose build
+
+    docker-compose up 
 
     This will start both the go-api and mysql services as defined in the docker-compose.yml.
 
