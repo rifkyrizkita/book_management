@@ -11,7 +11,7 @@ func BookRouters(book fiber.Router) {
 	book.Post("/", middlewares.VerifyToken, middlewares.AdminAuth, middlewares.ValidatorAddNewBook, middlewares.UploadFile("BIMG", ""), controllers.AddNewBook)
 	book.Post("/borrow/:id", middlewares.VerifyToken, controllers.BorrowBook)
 	// patch routers
-	book.Patch("/return/:id", middlewares.VerifyToken, controllers.ReturnBook)
+	book.Patch("/return/:id", middlewares.VerifyToken, middlewares.AdminAuth, controllers.ReturnBook)
 	// delete routers
 	book.Delete("/:id", middlewares.VerifyToken, middlewares.AdminAuth, controllers.DeleteBook)
 	// get routers

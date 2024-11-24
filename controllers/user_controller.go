@@ -73,11 +73,11 @@ func Login(c *fiber.Ctx) error {
 		body.Email,
 		body.Phone).Take(&user).Error
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials 1"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials 2"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 
 	tokenString, _ := helpers.GenerateToken(user.ID, time.Now().Add(time.Hour*24), c)

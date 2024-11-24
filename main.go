@@ -38,6 +38,8 @@ func main() {
 	routers.BookRouters(book)
 	category := api.Group("/category")
 	routers.CategoryRouters(category)
+	migration := api.Group("/migration")
+	routers.MigrationRouters(migration)
 	
 	log.Fatal(app.Listen(os.Getenv("PORT")))
 }
