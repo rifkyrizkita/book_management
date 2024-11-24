@@ -61,3 +61,8 @@ The following environment variables must be set for the application:
     DB_USER: MySQL username 
     DB_PASSWORD: MySQL password 
     DB_NAME: The name of the database 
+    
+You can find the full API documentation at the following link:
+
+    https://documenter.getpostman.com/view/30812847/2sAYBUDCRk
+
